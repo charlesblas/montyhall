@@ -1,0 +1,823 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Monty Hall Problem - 1970s Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier Prime', monospace;
+            background-color: #f4e8d0;
+            color: #2a1810;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 2px 2px 0 #8b7355;
+        }
+        
+        h2, h3 {
+            margin-bottom: 10px;
+        }
+        
+        .game-container {
+            background-color: #faf5e8;
+            border: 3px solid #2a1810;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 5px 5px 0 #8b7355;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .doors-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .door {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .door:hover:not(.disabled) {
+            transform: translateY(-10px);
+        }
+        
+        .door.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .door-frame {
+            width: 100%;
+            height: 100%;
+            border: 4px solid #2a1810;
+            background-color: #d4a574;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .door-number {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: bold;
+            background-color: #faf5e8;
+            border: 3px solid #2a1810;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .door-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .prize-image {
+            max-width: 140px;
+            max-height: 140px;
+            border-radius: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .door.open .door-content {
+            opacity: 1;
+        }
+        
+        .door.selected .door-frame {
+            border-color: #ff6b35;
+            border-width: 6px;
+            box-shadow: 0 0 20px #ff6b35;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .message {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            margin: 4px;
+            background-color: #ff6b35;
+            color: #faf5e8;
+            border: 2px solid #2a1810;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        button:hover:not(:disabled) {
+            background-color: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 0 #2a1810;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .bottom-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 900px;
+            flex-wrap: wrap;
+        }
+        
+        .stats-container {
+            background-color: #e8dcc0;
+            border: 3px solid #2a1810;
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px 15px;
+            background-color: #faf5e8;
+            border: 2px solid #2a1810;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+        
+        .simulation-controls {
+            background-color: #e8dcc0;
+            border: 3px solid #2a1810;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .simulation-result {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2a1810;
+            color: #faf5e8;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 100;
+        }
+        
+        .simulation-result.show {
+            opacity: 1;
+        }
+        
+        .strategy-selector {
+            margin: 15px 0;
+        }
+        
+        select, input[type="number"] {
+            font-family: 'Courier Prime', monospace;
+            font-size: 0.9rem;
+            padding: 6px;
+            margin: 0 8px;
+            border: 2px solid #2a1810;
+            border-radius: 5px;
+            background-color: #faf5e8;
+        }
+        
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #ff6b35;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .bounce {
+            animation: bounce 0.6s ease-out;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>The Monty Hall Problem</h1>
+    
+    <div class="game-container">
+        <div class="message" id="message">Choose a door!</div>
+        
+        <div class="doors-container">
+            <div class="door" data-door="0">
+                <div class="door-frame">
+                    <div class="door-number">1</div>
+                    <div class="door-content">
+                        <img class="prize-image" alt="Prize">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="door" data-door="1">
+                <div class="door-frame">
+                    <div class="door-number">2</div>
+                    <div class="door-content">
+                        <img class="prize-image" alt="Prize">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="door" data-door="2">
+                <div class="door-frame">
+                    <div class="door-number">3</div>
+                    <div class="door-content">
+                        <img class="prize-image" alt="Prize">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="switchBtn" style="display: none;">Switch Door</button>
+            <button id="stayBtn" style="display: none;">Stay with Door</button>
+            <button id="newGameBtn">New Game</button>
+        </div>
+    </div>
+    
+    <div class="bottom-container">
+        <div class="stats-container">
+        <h2>Statistics</h2>
+        <div class="stats-grid">
+            <div class="stat-box" style="grid-column: 1 / 4;">
+                <div class="stat-label">Games Played</div>
+                <div class="stat-value" id="totalGames">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Switched</div>
+                <div class="stat-value" id="switchWins">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Stayed</div>
+                <div class="stat-value" id="stayWins">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Wins</div>
+                <div class="stat-value" id="totalWins">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Switch Success</div>
+                <div class="stat-value" id="switchRate">0%</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Stay Success</div>
+                <div class="stat-value" id="stayRate">0%</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Overall Success</div>
+                <div class="stat-value" id="overallRate">0%</div>
+            </div>
+        </div>
+        <button id="resetStatsBtn" style="margin-top: 15px;">Reset Statistics</button>
+        </div>
+        
+        <div class="simulation-controls">
+        <div class="simulation-result" id="simResult"></div>
+        <h3>Run Simulations</h3>
+        <div class="strategy-selector">
+            <label>Strategy:</label>
+            <select id="strategySelect">
+                <option value="switch">Always Switch</option>
+                <option value="stay">Always Stay</option>
+                <option value="random">Random Choice</option>
+            </select>
+            <label>Count:</label>
+            <input type="number" id="simCount" value="100" min="1" max="10000">
+        </div>
+        <button id="runSimBtn">Run Simulations</button>
+        </div>
+    </div>
+    
+    <div class="fireworks" id="fireworks"></div>
+    
+    <script>
+        // Prize Images - SVG graphics
+        const goatSVG = `<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(70, 70)">
+                <!-- Goat body -->
+                <ellipse cx="0" cy="10" rx="40" ry="30" fill="#f0e6d2" stroke="#8b7355" stroke-width="2"/>
+                <!-- Goat head -->
+                <ellipse cx="-30" cy="-5" rx="20" ry="25" fill="#f0e6d2" stroke="#8b7355" stroke-width="2"/>
+                <!-- Horns -->
+                <path d="M-40,-25 L-35,-35 M-20,-25 L-15,-35" stroke="#8b7355" stroke-width="3" stroke-linecap="round"/>
+                <!-- Eyes -->
+                <circle cx="-35" cy="-10" r="3" fill="#2a1810"/>
+                <circle cx="-25" cy="-10" r="3" fill="#2a1810"/>
+                <!-- Nose -->
+                <ellipse cx="-30" cy="0" rx="5" ry="3" fill="#8b7355"/>
+                <!-- Legs -->
+                <rect x="-20" y="30" width="8" height="25" fill="#8b7355" stroke="#2a1810" stroke-width="1"/>
+                <rect x="-5" y="30" width="8" height="25" fill="#8b7355" stroke="#2a1810" stroke-width="1"/>
+                <rect x="10" y="30" width="8" height="25" fill="#8b7355" stroke="#2a1810" stroke-width="1"/>
+                <rect x="25" y="30" width="8" height="25" fill="#8b7355" stroke="#2a1810" stroke-width="1"/>
+                <!-- Beard -->
+                <path d="M-30,10 L-30,20 L-25,15 L-35,15 Z" fill="#d4a574" stroke="#8b7355" stroke-width="1"/>
+                <!-- Tail -->
+                <path d="M40,5 Q50,0 45,15" fill="none" stroke="#8b7355" stroke-width="3" stroke-linecap="round"/>
+            </g>
+        </svg>`;
+        
+        const carSVG = `<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(70, 70)">
+                <!-- Car body -->
+                <rect x="-50" y="-20" width="100" height="40" rx="10" fill="#ff6b35" stroke="#2a1810" stroke-width="2"/>
+                <!-- Car top -->
+                <path d="M-30,-20 L-20,-35 L20,-35 L30,-20" fill="#ff6b35" stroke="#2a1810" stroke-width="2"/>
+                <!-- Windows -->
+                <rect x="-25" y="-30" width="20" height="15" rx="3" fill="#87ceeb" stroke="#2a1810" stroke-width="1"/>
+                <rect x="5" y="-30" width="20" height="15" rx="3" fill="#87ceeb" stroke="#2a1810" stroke-width="1"/>
+                <!-- Wheels -->
+                <circle cx="-30" cy="25" r="12" fill="#2a1810"/>
+                <circle cx="30" cy="25" r="12" fill="#2a1810"/>
+                <circle cx="-30" cy="25" r="6" fill="#8b7355"/>
+                <circle cx="30" cy="25" r="6" fill="#8b7355"/>
+                <!-- Headlights -->
+                <ellipse cx="48" cy="-5" rx="5" ry="8" fill="#ffd93d" stroke="#2a1810" stroke-width="1"/>
+                <!-- Grille -->
+                <rect x="45" y="5" width="8" height="10" fill="#2a1810"/>
+                <!-- Door handle -->
+                <rect x="-10" y="-5" width="15" height="3" rx="1" fill="#2a1810"/>
+                <!-- Racing stripe -->
+                <rect x="-50" y="-12" width="100" height="4" fill="#faf5e8"/>
+            </g>
+        </svg>`;
+        
+        const goatImageURL = 'data:image/svg+xml;base64,' + btoa(goatSVG);
+        const carImageURL = 'data:image/svg+xml;base64,' + btoa(carSVG);
+        
+        // Game State
+        let gameState = {
+            selectedDoor: null,
+            carDoor: null,
+            revealedDoor: null,
+            gamePhase: 'selection', // 'selection', 'decision', 'result'
+            didSwitch: null
+        };
+        
+        // Statistics
+        let stats = {
+            totalGames: 0,
+            switchWins: 0,
+            switchGames: 0,
+            stayWins: 0,
+            stayGames: 0
+        };
+        
+        // Load stats from localStorage
+        function loadStats() {
+            const saved = localStorage.getItem('montyHallStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+                updateStatsDisplay();
+            }
+        }
+        
+        // Save stats to localStorage
+        function saveStats() {
+            localStorage.setItem('montyHallStats', JSON.stringify(stats));
+        }
+        
+        // Initialize game
+        function initGame() {
+            gameState = {
+                selectedDoor: null,
+                carDoor: Math.floor(Math.random() * 3),
+                revealedDoor: null,
+                gamePhase: 'selection',
+                didSwitch: null
+            };
+            
+            // Reset door states
+            document.querySelectorAll('.door').forEach(door => {
+                door.classList.remove('selected', 'open', 'disabled');
+                const img = door.querySelector('.prize-image');
+                img.src = '';
+            });
+            
+            // Reset buttons
+            document.getElementById('switchBtn').style.display = 'none';
+            document.getElementById('stayBtn').style.display = 'none';
+            document.getElementById('newGameBtn').disabled = false;
+            document.getElementById('message').textContent = 'Choose a door!';
+            
+            // Setup door contents (hidden initially)
+            document.querySelectorAll('.door').forEach((door, index) => {
+                const img = door.querySelector('.prize-image');
+                // Set the image source but keep it hidden
+                img.src = index === gameState.carDoor ? carImageURL : goatImageURL;
+                img.style.display = 'block';
+            });
+        }
+        
+        // Handle door click
+        function handleDoorClick(doorIndex) {
+            if (gameState.gamePhase === 'selection' && gameState.selectedDoor === null) {
+                gameState.selectedDoor = doorIndex;
+                document.querySelector(`[data-door="${doorIndex}"]`).classList.add('selected', 'bounce');
+                
+                // Disable new game button
+                document.getElementById('newGameBtn').disabled = true;
+                
+                // Reveal a goat door
+                let availableGoatDoors = [];
+                for (let i = 0; i < 3; i++) {
+                    if (i !== gameState.selectedDoor && i !== gameState.carDoor) {
+                        availableGoatDoors.push(i);
+                    }
+                }
+                
+                // Always reveal a goat door (not the car door)
+                gameState.revealedDoor = availableGoatDoors[Math.floor(Math.random() * availableGoatDoors.length)];
+                
+                setTimeout(() => {
+                    const revealedDoorEl = document.querySelector(`[data-door="${gameState.revealedDoor}"]`);
+                    revealedDoorEl.classList.add('open', 'shake');
+                    revealedDoorEl.classList.add('disabled');
+                    
+                    document.getElementById('message').textContent = `Door ${gameState.revealedDoor + 1} has a goat! Would you like to switch?`;
+                    document.getElementById('switchBtn').style.display = 'inline-block';
+                    document.getElementById('stayBtn').style.display = 'inline-block';
+                    
+                    gameState.gamePhase = 'decision';
+                }, 1000);
+            } else if (gameState.gamePhase === 'decision') {
+                // During decision phase, clicking on the other unopened door switches to it
+                if (doorIndex !== gameState.selectedDoor && doorIndex !== gameState.revealedDoor) {
+                    makeDecision(true);  // Switch to the clicked door
+                } else if (doorIndex === gameState.selectedDoor) {
+                    makeDecision(false);  // Stay with current door
+                }
+            }
+        }
+        
+        // Handle decision
+        function makeDecision(switchDoor) {
+            if (gameState.gamePhase !== 'decision') return;
+            
+            gameState.didSwitch = switchDoor;
+            
+            if (switchDoor) {
+                // Find the remaining door
+                for (let i = 0; i < 3; i++) {
+                    if (i !== gameState.selectedDoor && i !== gameState.revealedDoor) {
+                        document.querySelector(`[data-door="${gameState.selectedDoor}"]`).classList.remove('selected');
+                        gameState.selectedDoor = i;
+                        document.querySelector(`[data-door="${i}"]`).classList.add('selected', 'bounce');
+                        break;
+                    }
+                }
+            }
+            
+            // Reveal all doors
+            setTimeout(() => {
+                document.querySelectorAll('.door').forEach(door => {
+                    door.classList.add('open');
+                });
+                
+                const won = gameState.selectedDoor === gameState.carDoor;
+                
+                if (won) {
+                    document.getElementById('message').textContent = '🎉 Congratulations! You won a car! 🎉';
+                    createFireworks();
+                    document.querySelector(`[data-door="${gameState.carDoor}"]`).classList.add('bounce');
+                } else {
+                    document.getElementById('message').textContent = 'You got a goat! Better luck next time!';
+                }
+                
+                // Update statistics
+                stats.totalGames++;
+                if (switchDoor) {
+                    stats.switchGames++;
+                    if (won) stats.switchWins++;
+                } else {
+                    stats.stayGames++;
+                    if (won) stats.stayWins++;
+                }
+                
+                updateStatsDisplay();
+                saveStats();
+                
+                document.getElementById('switchBtn').style.display = 'none';
+                document.getElementById('stayBtn').style.display = 'none';
+                
+                // Re-enable new game button
+                document.getElementById('newGameBtn').disabled = false;
+                
+                gameState.gamePhase = 'result';
+            }, 500);
+        }
+        
+        // Update statistics display
+        function updateStatsDisplay() {
+            document.getElementById('totalGames').textContent = stats.totalGames;
+            document.getElementById('switchWins').textContent = stats.switchWins;
+            document.getElementById('stayWins').textContent = stats.stayWins;
+            
+            const totalWins = stats.switchWins + stats.stayWins;
+            document.getElementById('totalWins').textContent = totalWins;
+            
+            const switchRate = stats.switchGames > 0 ? 
+                Math.round((stats.switchWins / stats.switchGames) * 100) : 0;
+            const stayRate = stats.stayGames > 0 ? 
+                Math.round((stats.stayWins / stats.stayGames) * 100) : 0;
+            const overallRate = stats.totalGames > 0 ?
+                Math.round((totalWins / stats.totalGames) * 100) : 0;
+            
+            document.getElementById('switchRate').textContent = switchRate + '%';
+            document.getElementById('stayRate').textContent = stayRate + '%';
+            document.getElementById('overallRate').textContent = overallRate + '%';
+        }
+        
+        // Create fireworks effect
+        function createFireworks() {
+            const container = document.getElementById('fireworks');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.5;
+                    
+                    for (let j = 0; j < 20; j++) {
+                        const particle = document.createElement('div');
+                        particle.className = 'firework';
+                        particle.style.left = x + 'px';
+                        particle.style.top = y + 'px';
+                        
+                        const angle = (j / 20) * Math.PI * 2;
+                        const distance = 50 + Math.random() * 100;
+                        const tx = Math.cos(angle) * distance;
+                        const ty = Math.sin(angle) * distance;
+                        
+                        particle.style.setProperty('--tx', tx + 'px');
+                        particle.style.setProperty('--ty', ty + 'px');
+                        
+                        const colors = ['#ff6b35', '#ffd93d', '#6bcf7f', '#e84a5f', '#2a363b'];
+                        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        container.appendChild(particle);
+                        
+                        setTimeout(() => particle.remove(), 1000);
+                    }
+                }, i * 200);
+            }
+        }
+        
+        // Run simulations
+        async function runSimulations() {
+            const strategy = document.getElementById('strategySelect').value;
+            const count = parseInt(document.getElementById('simCount').value);
+            
+            // Disable button during simulation
+            document.getElementById('runSimBtn').disabled = true;
+            
+            // Start door cycling animation
+            let animationInterval = setInterval(() => {
+                document.querySelectorAll('.door').forEach((door, index) => {
+                    // Randomly add/remove classes to simulate games
+                    if (Math.random() < 0.3) {
+                        door.classList.add('selected');
+                        setTimeout(() => door.classList.remove('selected'), 100);
+                    }
+                    if (Math.random() < 0.2) {
+                        door.classList.add('open');
+                        setTimeout(() => door.classList.remove('open'), 150);
+                    }
+                });
+            }, 100);
+            
+            let wins = 0;
+            
+            // Add a small delay for animation visibility
+            await new Promise(resolve => setTimeout(resolve, Math.min(count * 2, 1000)));
+            
+            for (let i = 0; i < count; i++) {
+                const carDoor = Math.floor(Math.random() * 3);
+                const selectedDoor = Math.floor(Math.random() * 3);
+                
+                // Find which door Monty opens
+                let montyDoors = [];
+                for (let j = 0; j < 3; j++) {
+                    if (j !== selectedDoor && j !== carDoor) {
+                        montyDoors.push(j);
+                    }
+                }
+                const montyDoor = montyDoors[Math.floor(Math.random() * montyDoors.length)];
+                
+                // Determine final choice based on strategy
+                let finalChoice = selectedDoor;
+                
+                if (strategy === 'switch') {
+                    for (let j = 0; j < 3; j++) {
+                        if (j !== selectedDoor && j !== montyDoor) {
+                            finalChoice = j;
+                            break;
+                        }
+                    }
+                    stats.switchGames++;
+                    if (finalChoice === carDoor) {
+                        wins++;
+                        stats.switchWins++;
+                    }
+                } else if (strategy === 'stay') {
+                    stats.stayGames++;
+                    if (finalChoice === carDoor) {
+                        wins++;
+                        stats.stayWins++;
+                    }
+                } else { // random
+                    const shouldSwitch = Math.random() < 0.5;
+                    if (shouldSwitch) {
+                        for (let j = 0; j < 3; j++) {
+                            if (j !== selectedDoor && j !== montyDoor) {
+                                finalChoice = j;
+                                break;
+                            }
+                        }
+                        stats.switchGames++;
+                        if (finalChoice === carDoor) {
+                            wins++;
+                            stats.switchWins++;
+                        }
+                    } else {
+                        stats.stayGames++;
+                        if (finalChoice === carDoor) {
+                            wins++;
+                            stats.stayWins++;
+                        }
+                    }
+                }
+            }
+            
+            stats.totalGames += count;
+            updateStatsDisplay();
+            saveStats();
+            
+            // Stop animation and reset doors
+            clearInterval(animationInterval);
+            document.querySelectorAll('.door').forEach(door => {
+                door.classList.remove('selected', 'open');
+            });
+            
+            // Re-enable button
+            document.getElementById('runSimBtn').disabled = false;
+            
+            const winRate = Math.round((wins / count) * 100);
+            
+            // Display result on screen
+            const resultEl = document.getElementById('simResult');
+            resultEl.innerHTML = `${strategy.toUpperCase()}: ${wins}/${count} wins (${winRate}%)`;
+            resultEl.classList.add('show');
+            
+            // Fade out after 3 seconds
+            setTimeout(() => {
+                resultEl.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Event listeners
+        document.querySelectorAll('.door').forEach((door, index) => {
+            door.addEventListener('click', () => handleDoorClick(index));
+        });
+        
+        document.getElementById('switchBtn').addEventListener('click', () => makeDecision(true));
+        document.getElementById('stayBtn').addEventListener('click', () => makeDecision(false));
+        document.getElementById('newGameBtn').addEventListener('click', initGame);
+        document.getElementById('resetStatsBtn').addEventListener('click', () => {
+            stats = {
+                totalGames: 0,
+                switchWins: 0,
+                switchGames: 0,
+                stayWins: 0,
+                stayGames: 0
+            };
+            updateStatsDisplay();
+            saveStats();
+        });
+        document.getElementById('runSimBtn').addEventListener('click', runSimulations);
+        
+        // Initialize
+        loadStats();
+        initGame();
+    </script>
+</body>
+</html>
